@@ -209,7 +209,7 @@ public class DynmapStructuresPlugin extends JavaPlugin implements Listener {
         // Add nether fossils if supported
         if (StructureType.getStructureTypes().containsKey("nether_fossil")) {
             for (Biome biome : new Biome[]{SOUL_SAND_VALLEY}) {
-                BIOMES.get(biome).add(NETHER_FOSSIL);
+                BIOMES.getOrDefault(biome, new ArrayList<>()).add(NETHER_FOSSIL);
             }
         }
         // Add ruined portals if supported
@@ -218,7 +218,11 @@ public class DynmapStructuresPlugin extends JavaPlugin implements Listener {
                 if (biome == THE_END) {
                     continue;
                 }
-                BIOMES.get(biome).add(RUINED_PORTAL);
+                try {
+                    BIOMES.get(biome).add(RUINED_PORTAL);
+                }catch (NullPointerException exception){
+                    getLogger().info("NullPointer in biome "+biome.name());
+                }
             }
         }
         // Fill in id and label data structures
