@@ -3,6 +3,7 @@ package com.kovuthehusky.dynmap.structures;
 import java.io.*;
 import java.util.*;
 
+import com.google.common.collect.Lists;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.*;
 import org.bukkit.block.Biome;
@@ -21,8 +22,8 @@ import static org.bukkit.block.Biome.*;
 
 @SuppressWarnings("unused")
 public class DynmapStructuresPlugin extends JavaPlugin implements Listener {
-    private static final StructureType[][] BIOMES = new StructureType[Biome.values().length][];
-    private static final Map<StructureType, String> LABELS = new HashMap<StructureType, String>() {{
+    private static final Map<Biome, List<StructureType>> BIOMES = new HashMap<>();
+    private final Map<StructureType, String> LABELS = new HashMap<StructureType, String>() {{
         if (StructureType.getStructureTypes().containsKey("bastion_remnant")) {
             put(BASTION_REMNANT, "Bastion Remnant");
         }
@@ -66,157 +67,149 @@ public class DynmapStructuresPlugin extends JavaPlugin implements Listener {
         FileConfiguration configuration = this.getConfig();
         configuration.options().copyDefaults(true);
         this.saveConfig();
+        Biome s;
         // Fill in biome data structure
-        BIOMES[OCEAN.ordinal()] = new StructureType[]{BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD};
-        BIOMES[PLAINS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[DESERT.ordinal()] = new StructureType[]{DESERT_PYRAMID, MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[MOUNTAINS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[FOREST.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[TAIGA.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[SWAMP.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, SWAMP_HUT};
-        BIOMES[RIVER.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
+        BIOMES.put(OCEAN, Lists.newArrayList(BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD));
+        BIOMES.put(PLAINS, Lists.newArrayList(MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(DESERT, Lists.newArrayList(DESERT_PYRAMID, MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(MOUNTAINS, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(FOREST, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(TAIGA, Lists.newArrayList(MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(SWAMP, Lists.newArrayList(MINESHAFT, STRONGHOLD, SWAMP_HUT));
+        BIOMES.put(RIVER, Lists.newArrayList(MINESHAFT, STRONGHOLD));
         try {
-            BIOMES[Biome.valueOf("NETHER").ordinal()] = new StructureType[]{NETHER_FORTRESS};
+            BIOMES.put(Biome.valueOf("NETHER"), Lists.newArrayList(NETHER_FORTRESS));
         } catch (IllegalArgumentException e) {
             // This is expected behavior from 1.16 onward
         }
         try {
             Biome.valueOf("NETHER_WASTES");
-            BIOMES[NETHER_WASTES.ordinal()] = new StructureType[]{NETHER_FORTRESS};
+            BIOMES.put(NETHER_WASTES, Lists.newArrayList(NETHER_FORTRESS));
         } catch (IllegalArgumentException e) {
             getLogger().warning("NETHER_WASTES not supported.");
         }
-        BIOMES[THE_END.ordinal()] = new StructureType[]{END_CITY};
-        BIOMES[FROZEN_OCEAN.ordinal()] = new StructureType[]{BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD};
-        BIOMES[FROZEN_RIVER.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[SNOWY_TUNDRA.ordinal()] = new StructureType[]{IGLOO, MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[SNOWY_MOUNTAINS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[MUSHROOM_FIELDS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[MUSHROOM_FIELD_SHORE.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[BEACH.ordinal()] = new StructureType[]{BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD};
-        BIOMES[DESERT_HILLS.ordinal()] = new StructureType[]{DESERT_PYRAMID, MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[WOODED_HILLS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[TAIGA_HILLS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[MOUNTAIN_EDGE.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[JUNGLE.ordinal()] = new StructureType[]{JUNGLE_PYRAMID, MINESHAFT, STRONGHOLD};
-        BIOMES[JUNGLE_HILLS.ordinal()] = new StructureType[]{JUNGLE_PYRAMID, MINESHAFT, STRONGHOLD};
-        BIOMES[JUNGLE_EDGE.ordinal()] = new StructureType[]{JUNGLE_PYRAMID, MINESHAFT, STRONGHOLD};
-        BIOMES[DEEP_OCEAN.ordinal()] = new StructureType[]{BURIED_TREASURE, MINESHAFT, OCEAN_MONUMENT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD};
-        BIOMES[STONE_SHORE.ordinal()] = new StructureType[]{BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD};
-        BIOMES[SNOWY_BEACH.ordinal()] = new StructureType[]{BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD};
-        BIOMES[BIRCH_FOREST.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[BIRCH_FOREST_HILLS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[DARK_FOREST.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, WOODLAND_MANSION};
-        BIOMES[SNOWY_TAIGA.ordinal()] = new StructureType[]{IGLOO, MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[SNOWY_TAIGA_HILLS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[GIANT_TREE_TAIGA.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[GIANT_TREE_TAIGA_HILLS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[WOODED_MOUNTAINS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[SAVANNA.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[SAVANNA_PLATEAU.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[BADLANDS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[WOODED_BADLANDS_PLATEAU.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[BADLANDS_PLATEAU.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[SMALL_END_ISLANDS.ordinal()] = new StructureType[]{END_CITY};
-        BIOMES[END_MIDLANDS.ordinal()] = new StructureType[]{END_CITY};
-        BIOMES[END_HIGHLANDS.ordinal()] = new StructureType[]{END_CITY};
-        BIOMES[END_BARRENS.ordinal()] = new StructureType[]{END_CITY};
-        BIOMES[WARM_OCEAN.ordinal()] = new StructureType[]{BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD};
-        BIOMES[LUKEWARM_OCEAN.ordinal()] = new StructureType[]{BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD};
-        BIOMES[COLD_OCEAN.ordinal()] = new StructureType[]{BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD};
-        BIOMES[DEEP_WARM_OCEAN.ordinal()] = new StructureType[]{BURIED_TREASURE, MINESHAFT, OCEAN_MONUMENT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD};
-        BIOMES[DEEP_LUKEWARM_OCEAN.ordinal()] = new StructureType[]{BURIED_TREASURE, MINESHAFT, OCEAN_MONUMENT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD};
-        BIOMES[DEEP_COLD_OCEAN.ordinal()] = new StructureType[]{BURIED_TREASURE, MINESHAFT, OCEAN_MONUMENT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD};
-        BIOMES[DEEP_FROZEN_OCEAN.ordinal()] = new StructureType[]{BURIED_TREASURE, MINESHAFT, OCEAN_MONUMENT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD};
-        BIOMES[THE_VOID.ordinal()] = new StructureType[]{};
-        BIOMES[SUNFLOWER_PLAINS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[DESERT_LAKES.ordinal()] = new StructureType[]{DESERT_PYRAMID, MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[GRAVELLY_MOUNTAINS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[FLOWER_FOREST.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[TAIGA_MOUNTAINS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[SWAMP_HILLS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, SWAMP_HUT};
-        BIOMES[ICE_SPIKES.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[MODIFIED_JUNGLE.ordinal()] = new StructureType[]{JUNGLE_PYRAMID, MINESHAFT, STRONGHOLD};
-        BIOMES[MODIFIED_JUNGLE_EDGE.ordinal()] = new StructureType[]{JUNGLE_PYRAMID, MINESHAFT, STRONGHOLD};
-        BIOMES[TALL_BIRCH_FOREST.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[TALL_BIRCH_HILLS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[DARK_FOREST_HILLS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, WOODLAND_MANSION};
-        BIOMES[SNOWY_TAIGA_MOUNTAINS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[GIANT_SPRUCE_TAIGA.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[GIANT_SPRUCE_TAIGA_HILLS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[MODIFIED_GRAVELLY_MOUNTAINS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[SHATTERED_SAVANNA.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[SHATTERED_SAVANNA_PLATEAU.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD, VILLAGE};
-        BIOMES[ERODED_BADLANDS.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[MODIFIED_WOODED_BADLANDS_PLATEAU.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
-        BIOMES[MODIFIED_BADLANDS_PLATEAU.ordinal()] = new StructureType[]{MINESHAFT, STRONGHOLD};
+        BIOMES.put(THE_END, Lists.newArrayList(END_CITY));
+        BIOMES.put(FROZEN_OCEAN, Lists.newArrayList(BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD));
+        BIOMES.put(FROZEN_RIVER, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(SNOWY_TUNDRA, Lists.newArrayList(IGLOO, MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(SNOWY_MOUNTAINS, Lists.newArrayList(MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(MUSHROOM_FIELDS, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(MUSHROOM_FIELD_SHORE, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(BEACH, Lists.newArrayList(BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD));
+        BIOMES.put(DESERT_HILLS, Lists.newArrayList(DESERT_PYRAMID, MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(WOODED_HILLS, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(TAIGA_HILLS, Lists.newArrayList(MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(MOUNTAIN_EDGE, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(JUNGLE, Lists.newArrayList(JUNGLE_PYRAMID, MINESHAFT, STRONGHOLD));
+        BIOMES.put(JUNGLE_HILLS, Lists.newArrayList(JUNGLE_PYRAMID, MINESHAFT, STRONGHOLD));
+        BIOMES.put(JUNGLE_EDGE, Lists.newArrayList(JUNGLE_PYRAMID, MINESHAFT, STRONGHOLD));
+        BIOMES.put(DEEP_OCEAN, Lists.newArrayList(BURIED_TREASURE, MINESHAFT, OCEAN_MONUMENT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD));
+        BIOMES.put(STONE_SHORE, Lists.newArrayList(BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD));
+        BIOMES.put(SNOWY_BEACH, Lists.newArrayList(BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD));
+        BIOMES.put(BIRCH_FOREST, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(BIRCH_FOREST_HILLS, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(DARK_FOREST, Lists.newArrayList(MINESHAFT, STRONGHOLD, WOODLAND_MANSION));
+        BIOMES.put(SNOWY_TAIGA, Lists.newArrayList(IGLOO, MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(SNOWY_TAIGA_HILLS, Lists.newArrayList(MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(GIANT_TREE_TAIGA, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(GIANT_TREE_TAIGA_HILLS, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(WOODED_MOUNTAINS, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(SAVANNA, Lists.newArrayList(MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(SAVANNA_PLATEAU, Lists.newArrayList(MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(BADLANDS, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(WOODED_BADLANDS_PLATEAU, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(BADLANDS_PLATEAU, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(SMALL_END_ISLANDS, Lists.newArrayList(END_CITY));
+        BIOMES.put(END_MIDLANDS, Lists.newArrayList(END_CITY));
+        BIOMES.put(END_HIGHLANDS, Lists.newArrayList(END_CITY));
+        BIOMES.put(END_BARRENS, Lists.newArrayList(END_CITY));
+        BIOMES.put(WARM_OCEAN, Lists.newArrayList(BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD));
+        BIOMES.put(LUKEWARM_OCEAN, Lists.newArrayList(BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD));
+        BIOMES.put(COLD_OCEAN, Lists.newArrayList(BURIED_TREASURE, MINESHAFT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD));
+        BIOMES.put(DEEP_WARM_OCEAN, Lists.newArrayList(BURIED_TREASURE, MINESHAFT, OCEAN_MONUMENT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD));
+        BIOMES.put(DEEP_LUKEWARM_OCEAN, Lists.newArrayList(BURIED_TREASURE, MINESHAFT, OCEAN_MONUMENT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD));
+        BIOMES.put(DEEP_COLD_OCEAN, Lists.newArrayList(BURIED_TREASURE, MINESHAFT, OCEAN_MONUMENT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD));
+        BIOMES.put(DEEP_FROZEN_OCEAN, Lists.newArrayList(BURIED_TREASURE, MINESHAFT, OCEAN_MONUMENT, OCEAN_RUIN, SHIPWRECK, STRONGHOLD));
+        BIOMES.put(THE_VOID, Lists.newArrayList());
+        BIOMES.put(SUNFLOWER_PLAINS, Lists.newArrayList(MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(DESERT_LAKES, Lists.newArrayList(DESERT_PYRAMID, MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(GRAVELLY_MOUNTAINS, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(FLOWER_FOREST, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(TAIGA_MOUNTAINS, Lists.newArrayList(MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(SWAMP_HILLS, Lists.newArrayList(MINESHAFT, STRONGHOLD, SWAMP_HUT));
+        BIOMES.put(ICE_SPIKES, Lists.newArrayList(MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(MODIFIED_JUNGLE, Lists.newArrayList(JUNGLE_PYRAMID, MINESHAFT, STRONGHOLD));
+        BIOMES.put(MODIFIED_JUNGLE_EDGE, Lists.newArrayList(JUNGLE_PYRAMID, MINESHAFT, STRONGHOLD));
+        BIOMES.put(TALL_BIRCH_FOREST, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(TALL_BIRCH_HILLS, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(DARK_FOREST_HILLS, Lists.newArrayList(MINESHAFT, STRONGHOLD, WOODLAND_MANSION));
+        BIOMES.put(SNOWY_TAIGA_MOUNTAINS, Lists.newArrayList(MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(GIANT_SPRUCE_TAIGA, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(GIANT_SPRUCE_TAIGA_HILLS, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(MODIFIED_GRAVELLY_MOUNTAINS, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(SHATTERED_SAVANNA, Lists.newArrayList(MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(SHATTERED_SAVANNA_PLATEAU, Lists.newArrayList(MINESHAFT, STRONGHOLD, VILLAGE));
+        BIOMES.put(ERODED_BADLANDS, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(MODIFIED_WOODED_BADLANDS_PLATEAU, Lists.newArrayList(MINESHAFT, STRONGHOLD));
+        BIOMES.put(MODIFIED_BADLANDS_PLATEAU, Lists.newArrayList(MINESHAFT, STRONGHOLD));
         try {
             Biome.valueOf("BAMBOO_JUNGLE");
-            BIOMES[BAMBOO_JUNGLE.ordinal()] = new StructureType[]{JUNGLE_PYRAMID, MINESHAFT, STRONGHOLD};
+            BIOMES.put(BAMBOO_JUNGLE, Lists.newArrayList(JUNGLE_PYRAMID, MINESHAFT, STRONGHOLD));
         } catch (IllegalArgumentException e) {
             getLogger().warning("BAMBOO_JUNGLE not supported.");
         }
         try {
             Biome.valueOf("BAMBOO_JUNGLE_HILLS");
-            BIOMES[BAMBOO_JUNGLE_HILLS.ordinal()] = new StructureType[]{JUNGLE_PYRAMID, MINESHAFT, STRONGHOLD};
+            BIOMES.put(BAMBOO_JUNGLE_HILLS, Lists.newArrayList(JUNGLE_PYRAMID, MINESHAFT, STRONGHOLD));
         } catch (IllegalArgumentException e) {
             getLogger().warning("BAMBOO_JUNGLE_HILLS not supported.");
         }
         try {
             Biome.valueOf("SOUL_SAND_VALLEY");
-            BIOMES[SOUL_SAND_VALLEY.ordinal()] = new StructureType[]{NETHER_FORTRESS};
+            BIOMES.put(SOUL_SAND_VALLEY, Lists.newArrayList(NETHER_FORTRESS));
         } catch (IllegalArgumentException e) {
             getLogger().warning("SOUL_SAND_VALLEY not supported.");
         }
         try {
             Biome.valueOf("CRIMSON_FOREST");
-            BIOMES[CRIMSON_FOREST.ordinal()] = new StructureType[]{NETHER_FORTRESS};
+            BIOMES.put(CRIMSON_FOREST, Lists.newArrayList(NETHER_FORTRESS));
         } catch (IllegalArgumentException e) {
             getLogger().warning("CRIMSON_FOREST not supported.");
         }
         try {
             Biome.valueOf("WARPED_FOREST");
-            BIOMES[WARPED_FOREST.ordinal()] = new StructureType[]{NETHER_FORTRESS};
+            BIOMES.put(WARPED_FOREST, Lists.newArrayList(NETHER_FORTRESS));
         } catch (IllegalArgumentException e) {
             getLogger().warning("WARPED_FOREST not supported.");
         }
         try {
             Biome.valueOf("BASALT_DELTAS");
-            BIOMES[BASALT_DELTAS.ordinal()] = new StructureType[]{NETHER_FORTRESS};
+            BIOMES.put(BASALT_DELTAS, Lists.newArrayList(NETHER_FORTRESS));
         } catch (IllegalArgumentException e) {
             getLogger().warning("BASALT_DELTAS not supported.");
         }
         try {
             Biome.valueOf("CUSTOM");
-            BIOMES[CUSTOM.ordinal()] = new StructureType[]{BASTION_REMNANT, BURIED_TREASURE, DESERT_PYRAMID, END_CITY, NETHER_FORTRESS, IGLOO, JUNGLE_PYRAMID, WOODLAND_MANSION, MINESHAFT, NETHER_FOSSIL, OCEAN_MONUMENT, OCEAN_RUIN, PILLAGER_OUTPOST, RUINED_PORTAL, SHIPWRECK, STRONGHOLD, SWAMP_HUT, VILLAGE};
+            BIOMES.put(CUSTOM, Lists.newArrayList(BASTION_REMNANT, BURIED_TREASURE, DESERT_PYRAMID, END_CITY, NETHER_FORTRESS, IGLOO, JUNGLE_PYRAMID, WOODLAND_MANSION, MINESHAFT, NETHER_FOSSIL, OCEAN_MONUMENT, OCEAN_RUIN, PILLAGER_OUTPOST, RUINED_PORTAL, SHIPWRECK, STRONGHOLD, SWAMP_HUT, VILLAGE));
         } catch (IllegalArgumentException e) {
             getLogger().warning("CUSTOM not supported.");
         }
         // Add pillager outposts if supported
         if (StructureType.getStructureTypes().containsKey("pillager_outpost")) {
             for (Biome biome : new Biome[]{PLAINS, DESERT, TAIGA, SNOWY_TUNDRA, SNOWY_MOUNTAINS, DESERT_HILLS, TAIGA_HILLS, SNOWY_TAIGA, SNOWY_TAIGA_HILLS, SAVANNA, SAVANNA_PLATEAU, SUNFLOWER_PLAINS, DESERT_LAKES, TAIGA_MOUNTAINS, ICE_SPIKES, SNOWY_TAIGA_MOUNTAINS, SHATTERED_SAVANNA, SHATTERED_SAVANNA_PLATEAU}) {
-                StructureType[] temp = new StructureType[BIOMES[biome.ordinal()].length + 1];
-                System.arraycopy(BIOMES[biome.ordinal()], 0, temp, 0, BIOMES[biome.ordinal()].length);
-                temp[temp.length - 1] = PILLAGER_OUTPOST;
-                BIOMES[biome.ordinal()] = temp;
+                BIOMES.get(biome).add(PILLAGER_OUTPOST);
             }
         }
         // Add bastion remnant if supported
         if (StructureType.getStructureTypes().containsKey("bastion_remnant")) {
             for (Biome biome : new Biome[]{NETHER_WASTES, SOUL_SAND_VALLEY, CRIMSON_FOREST, WARPED_FOREST}) {
-                StructureType[] temp = new StructureType[BIOMES[biome.ordinal()].length + 1];
-                System.arraycopy(BIOMES[biome.ordinal()], 0, temp, 0, BIOMES[biome.ordinal()].length);
-                temp[temp.length - 1] = BASTION_REMNANT;
-                BIOMES[biome.ordinal()] = temp;
+                BIOMES.get(biome).add(BASTION_REMNANT);
             }
         }
         // Add nether fossils if supported
         if (StructureType.getStructureTypes().containsKey("nether_fossil")) {
             for (Biome biome : new Biome[]{SOUL_SAND_VALLEY}) {
-                StructureType[] temp = new StructureType[BIOMES[biome.ordinal()].length + 1];
-                System.arraycopy(BIOMES[biome.ordinal()], 0, temp, 0, BIOMES[biome.ordinal()].length);
-                temp[temp.length - 1] = NETHER_FOSSIL;
-                BIOMES[biome.ordinal()] = temp;
+                BIOMES.get(biome).add(NETHER_FOSSIL);
             }
         }
         // Add ruined portals if supported
@@ -225,10 +218,7 @@ public class DynmapStructuresPlugin extends JavaPlugin implements Listener {
                 if (biome == THE_END) {
                     continue;
                 }
-                StructureType[] temp = new StructureType[BIOMES[biome.ordinal()].length + 1];
-                System.arraycopy(BIOMES[biome.ordinal()], 0, temp, 0, BIOMES[biome.ordinal()].length);
-                temp[temp.length - 1] = RUINED_PORTAL;
-                BIOMES[biome.ordinal()] = temp;
+                BIOMES.get(biome).add(RUINED_PORTAL);
             }
         }
         // Fill in id and label data structures
@@ -241,7 +231,7 @@ public class DynmapStructuresPlugin extends JavaPlugin implements Listener {
             }
         }
         // Register for events
-        this.getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(this, this);
         // Check if Dynmap is even enabled
         if (Bukkit.getPluginManager().isPluginEnabled("dynmap")) {
             // Set up our Dynmap api
@@ -328,7 +318,7 @@ public class DynmapStructuresPlugin extends JavaPlugin implements Listener {
                     biome = world.getBiome(location.getBlockX(), location.getBlockZ());
                 }
                 if (biome != null) {
-                    for (StructureType type : BIOMES[biome.ordinal()]) {
+                    for (StructureType type : BIOMES.get(biome)) {
                         if (STRUCTURES.get(type)) {
                             Location structure;
                             try {
